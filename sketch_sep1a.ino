@@ -22,22 +22,20 @@ int pin_p1 = A0;
 int pin_p2 = A6;
 int leds_cnt = 6;
 int p0_leds[15] = {2,3,4,5,6,7,8,9,A1,A2,A3,A4,A5,0,1};
-int p1_leds[6] = {2,3,4,5,8,9};
-int p2_leds[6] = {A2,A3,A4,A5,0,1};
+int p0_size = 0;
+int p1_leds[8] = {2,3,4,5,6,7,8,9};
+int p2_leds[7] = {A1,A2,A3,A4,A5,0,1};
 int p1_score = 0;
 int p2_score = 0;
 int pin_light = 0;
 char buf[10];
+bool step_action = false;
 bool numPlayer = false; //jeden gracz - false ,dwóch - true
 int difSet = 0; //poziom trudności: 0- led świecą aż do naciśnięcia; 1- led gasną przed zapaleniem kolejnego; 2- 1+ ujemne punkty za nietrafienie; 3- 2+ ujemne punkkty za nie zgaszenie led; można to ogarnąć też inaczej:)
-int p0_size = 0;
-//int step_counter = 0;
+int step_counter = 0;
 int btn_tol = 25;
-//int leds_cnt = 8;
-//int p1_leds[8] = {2,3,4,5,6,7,8,9};
-//int p2_leds[8] = {A1,A2,A3,A4,A5,0,1,1};
-//int action_speed = 10;
-//int action_speed_min = 5;
+int action_speed = 10;
+int action_speed_min = 5;
 
 void setup() {
   Serial.begin(9600);
@@ -78,26 +76,25 @@ void setup() {
   {
     analogValue=analogValue1;
   }
-  if (analogValue>button_values1+btn_tol)
+  for (int i = 0; p0_size > i; i++) 
   {
-
+    digitalWrite(p0_leds[i], 0);
   }
-    
+  gameSet();
 
   P.begin(1);
   P.displayClear();
-  P.displayText( "ABcdE", PA_LEFT, 1, 3000, PA_NO_EFFECT);
+  if (numPlayer == true)
+    P.displayText( "2 GRACZY", PA_LEFT, 1, 3000, PA_NO_EFFECT);
+  else
+    P.displayText( "1 GRACZ", PA_CENTER, 1, 3000, PA_NO_EFFECT);
   P.displayAnimate(); //wyświetlenie wartości na LED MATRIX
-  delay(500);
-  P.displayText( "ABcdE", PA_CENTER, 1, 3000, PA_NO_EFFECT);
-  P.displayAnimate();
   delay(500);
 }
 
 void loop() {
-
-   /* step_counter++;
-    bool step_action = false;
+    step_counter++;
+    step_action = false;
     if (step_counter > action_speed) {
       step_counter = 0;
       step_action = true;  
@@ -106,79 +103,181 @@ void loop() {
         action_speed = action_speed_min;
       }
      // Serial.println(action_speed);
-    }*/
-  //Serial.println(step_counter);
- /*   if (step_action) {
+    }
+
+  if (numPlayer == true)//2 graczy
+  {
+    if (step_action) 
+    {
       int pin_light = random(0,6);
-      //digitalWrite(p1_leds[pin_light], HIGH);
-      for (int i = 0; leds_cnt - 1 > i; i++) {
+      /*for (int i = 0; leds_cnt - 1 > i; i++) {
+        //tu wstawić odejmowanie punktów
         digitalWrite(p1_leds[i], LOW);
         digitalWrite(p2_leds[i], LOW);
-      }
-      digitalWrite(p1_leds[7], LOW);
+      }*/
+      digitalWrite(p1_leds[pin_light], HIGH);
       digitalWrite(p2_leds[pin_light], HIGH);
-      
-    }*/
-
-
-
-
-//Serial.println(analogValue);
- 
+    }
+    game_2();
     sprintf(buf, "%d - %d", p1_score, p2_score);
-    P.displayClear();
-    P.displayText(buf, PA_CENTER, 0, 0, PA_NO_EFFECT);
-
-    P.displayAnimate();
-
- 
+  }
+  else //1 gracz
+  {
+    int pin_light = random(0,6);
+      /*for (int i = 0; leds_cnt - 1 > i; i++) {
+        tu wstawić odejmowanie punktów
+        digitalWrite(p1_leds[i], LOW);
+      }*/
+      digitalWrite(p0_leds[pin_light], HIGH);
+    game_1();
+    sprintf(buf, "%d", p1_score);
+  }
+  P.displayClear();
+  P.displayText(buf, PA_CENTER, 0, 0, PA_NO_EFFECT);
+  P.displayAnimate();
   delay(150);  
 }
 
-void game_1()
+void game_1()  //TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!
 {
-  //TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!
-analogValue0 = 0;
-analogValue1 = 0;
-analogValue = analogRead(pin_p2);
- if (analogValue > 50)
- {
- analogValue0 = analogValue;
- delay(5);  
- analogValue1 = analogRead(pin_p2);
- analogValue = (analogValue0+analogValue1)/2;
-for (int i = 0; leds_cnt > i; i++) {
-      if ( analogValue < button_values2[i] + btn_tol and analogValue > button_values2[i] - btn_tol ){
-          if(digitalRead(p2_leds[i]) == HIGH){
-            digitalWrite(p2_leds[i], LOW);
-            p2_score++;
-            //Serial.println(p2_score);
-          }
-        
+  analogValue1 = 0;
+  analogValue = analogRead(pin_p2);
+  if (analogValue > 50)
+  {
+    delay(5);  
+    analogValue1 = analogRead(pin_p2);
+    analogValue = (analogValue+analogValue1)/2;
+    for (int i = 0; 7 > i; i++) 
+    {
+      if ( analogValue < button_values2[i] + btn_tol and analogValue > button_values2[i] - btn_tol )
+      {
+        if(digitalRead(p2_leds[i]) == HIGH) 
+        {
+          digitalWrite(p2_leds[i], LOW);
+          p1_score++;
         }
       }
- }
+    }
+  }
+  analogValue = analogRead(pin_p1);
+  if (analogValue > 50)
+  {
+    delay(5);  
+    analogValue1 = analogRead(pin_p1);
+    analogValue = (analogValue+analogValue1)/2;
+    for (int i = 0; 8 > i; i++) 
+    {
+      if ( analogValue < button_values1[i] + btn_tol and analogValue > button_values1[i] - btn_tol )
+      {
+        if(digitalRead(p1_leds[i]) == HIGH) 
+        {
+          digitalWrite(p1_leds[i], LOW);
+          p1_score++;
+        }
+      }
+    }
+  }
 }
-void game_2()
+void game_2()  //TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!
 {
-  analogValue0 = 0;
-analogValue1 = 0;
-analogValue = analogRead(pin_p2);
- if (analogValue > 50)
- {
- analogValue0 = analogValue;
- delay(5);  
- analogValue1 = analogRead(pin_p2);
- analogValue = (analogValue0+analogValue1)/2;
-for (int i = 0; leds_cnt > i; i++) {
-      if ( analogValue < button_values2[i] + btn_tol and analogValue > button_values2[i] - btn_tol ){
-          if(digitalRead(p2_leds[i]) == HIGH){
-            digitalWrite(p2_leds[i], LOW);
-            p2_score++;
-            //Serial.println(p2_score);
-          }
-        
+  //gracz nr 2
+  analogValue1 = 0;
+  analogValue = analogRead(pin_p2);
+  if (analogValue > 50)
+  {
+    delay(5);  
+    analogValue1 = analogRead(pin_p2);
+    analogValue = (analogValue+analogValue1)/2;
+    for (int i = 0; leds_cnt > i; i++) 
+    {
+      if ( analogValue < button_values2[i] + btn_tol and analogValue > button_values2[i] - btn_tol )
+      {
+        if(digitalRead(p2_leds[i]) == HIGH)
+        {
+          digitalWrite(p2_leds[i], LOW);
+          p1_score++;
         }
       }
- }
+    }
+  }
+  //gracz nr 1
+  analogValue1 = 0;
+  analogValue = analogRead(pin_p1);
+  if (analogValue > 50)
+  {
+    delay(5);  
+    analogValue1 = analogRead(pin_p1);
+    analogValue = (analogValue+analogValue1)/2;
+    for (int i = 0; leds_cnt > i; i++) 
+    {
+      if ( analogValue < button_values1[i] + btn_tol and analogValue > button_values1[i] - btn_tol )
+      {
+        if(digitalRead(p1_leds[i]) == HIGH)
+        {
+          digitalWrite(p1_leds[i], LOW);
+          p2_score++;
+        }
+      }
+    }
+  }
+}
+void gameSet()
+{
+  //1 gracz
+  if ( analogValue < button_values1[0] + btn_tol and analogValue > button_values1[0] - btn_tol )//bt01
+  {
+    difSet = 1;
+  }
+  else if ( analogValue < button_values2[0] + btn_tol and analogValue > button_values2[0] - btn_tol )//bt02
+  {
+    difSet = 2;
+  } 
+  else if ( analogValue < button_values2[1] + btn_tol and analogValue > button_values2[1] - btn_tol )//bt02
+  {
+    difSet = 3;
+  } 
+  else if ( analogValue < button_values2[2] + btn_tol and analogValue > button_values2[2] - btn_tol )//bt02
+  {
+    difSet = 3;
+  } 
+  //2 graczy 
+  if ( analogValue < button_values1[2] + btn_tol and analogValue > button_values1[2] - btn_tol )//bt01
+  {
+    difSet = 0;
+    but_value();
+  }
+  else if ( analogValue < button_values1[3] + btn_tol and analogValue > button_values1[3] - btn_tol )//bt01
+  {
+    difSet = 1;
+    but_value();
+  }
+  else if ( analogValue < button_values1[4] + btn_tol and analogValue > button_values1[4] - btn_tol )//bt02
+  {
+    difSet = 2;
+    but_value();
+  } 
+  else if ( analogValue < button_values2[4] + btn_tol and analogValue > button_values2[4] - btn_tol )//bt02
+  {
+    difSet = 3;
+    but_value();
+  } 
+  else if ( analogValue < button_values2[3] + btn_tol and analogValue > button_values2[3] - btn_tol )//bt02
+  {
+    difSet = 3;
+    but_value();
+  } 
+}
+
+void but_value()//ograniczenie rozmiaru tablic do "6"
+{
+  numPlayer = true;
+  button_values1[4]=button_values1[6];
+  button_values1[5]=button_values1[7];
+  p1_leds[4]=p1_leds[6];
+  p1_leds[5]=p1_leds[7];
+  for (int i = 0; leds_cnt>i;i++)
+  {
+    button_values2[i]=button_values2[i+1];
+    p2_leds[i]=p2_leds[i+1];
+  }
 }
