@@ -28,8 +28,8 @@ int p1_score = 0;
 int p2_score = 0;
 int pin_light = 0;
 char buf[10];
-bool numPlayer = false;
-bool lightsOn = false;
+bool numPlayer = false; //jeden gracz - false ,dwóch - true
+int difSet = 0; //poziom trudności: 0- led świecą aż do naciśnięcia; 1- led gasną przed zapaleniem kolejnego; 2- 1+ ujemne punkty za nietrafienie; 3- 2+ ujemne punkkty za nie zgaszenie led; można to ogarnąć też inaczej:)
 int p0_size = 0;
 //int step_counter = 0;
 int btn_tol = 25;
@@ -48,11 +48,10 @@ void setup() {
   pinMode(pin_p2, INPUT);
 
   p0_size = sizeof(p0_leds)/sizeof(int);
-    for (int i = 0; p0_size > i; i++) {
+  for (int i = 0; p0_size > i; i++) 
+  {
     pinMode(p0_leds[i], OUTPUT);
     digitalWrite(p0_leds[i], 0);
-    //Serial.println(i);
-    //Serial.println(digitalRead(p0_leds[pin_light]));
   }
   
   //oczekiwanie na wybór trybu gry
