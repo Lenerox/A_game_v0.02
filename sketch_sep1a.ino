@@ -44,9 +44,11 @@ void setup() {
 
   randomSeed(analogRead(A1));
   
+  //inicjalizacja przycisków
   pinMode(pin_p1, INPUT);
   pinMode(pin_p2, INPUT);
 
+  //inicjalizacja led
   p0_size = sizeof(p0_leds)/sizeof(int);
   for (int i = 0; p0_size > i; i++) 
   {
@@ -71,23 +73,25 @@ void setup() {
       analogValue=analogRead(pin_p2);
   }
   pin_light = 0;
- 
-  
+  analogValue1=analogRead(pin_p1);
+  if (analogValue<analogValue1)
+  {
+    analogValue=analogValue1;
+  }
+  if (analogValue>button_values1+btn_tol)
+  {
 
+  }
     
 
-P.begin(1);
-
+  P.begin(1);
+  P.displayClear();
   P.displayText( "ABcdE", PA_LEFT, 1, 3000, PA_NO_EFFECT);
-  //P.displayText(const char *pText, textPosition_t align, uint16_t speed, uint16_t pause, textEffect_t effectIn)
-  P.displayAnimate();
-  delay(500);  
-  delay(500);  
+  P.displayAnimate(); //wyświetlenie wartości na LED MATRIX
+  delay(500);
   P.displayText( "ABcdE", PA_CENTER, 1, 3000, PA_NO_EFFECT);
-  //P.displayText(const char *pText, textPosition_t align, uint16_t speed, uint16_t pause, textEffect_t effectIn)
   P.displayAnimate();
-  delay(500);  
-  delay(500);  
+  delay(500);
 }
 
 void loop() {
@@ -118,6 +122,22 @@ void loop() {
 
 
 
+
+//Serial.println(analogValue);
+ 
+    sprintf(buf, "%d - %d", p1_score, p2_score);
+    P.displayClear();
+    P.displayText(buf, PA_CENTER, 0, 0, PA_NO_EFFECT);
+
+    P.displayAnimate();
+
+ 
+  delay(150);  
+}
+
+void game_1()
+{
+  //TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!
 analogValue0 = 0;
 analogValue1 = 0;
 analogValue = analogRead(pin_p2);
@@ -138,14 +158,27 @@ for (int i = 0; leds_cnt > i; i++) {
         }
       }
  }
-//Serial.println(analogValue);
- 
-    sprintf(buf, "%d - %d", p1_score, p2_score);
-    P.displayClear();
-    P.displayText(buf, PA_CENTER, 0, 0, PA_NO_EFFECT);
-
-    P.displayAnimate();
-
- 
-  delay(150);  
+}
+void game_2()
+{
+  analogValue0 = 0;
+analogValue1 = 0;
+analogValue = analogRead(pin_p2);
+ if (analogValue > 50)
+ {
+ analogValue0 = analogValue;
+ delay(5);  
+ analogValue1 = analogRead(pin_p2);
+ analogValue = (analogValue0+analogValue1)/2;
+for (int i = 0; leds_cnt > i; i++) {
+      if ( analogValue < button_values2[i] + btn_tol and analogValue > button_values2[i] - btn_tol ){
+          if(digitalRead(p2_leds[i]) == HIGH){
+            digitalWrite(p2_leds[i], LOW);
+            p2_score++;
+            //Serial.println(p2_score);
+          }
+        
+        }
+      }
+ }
 }
