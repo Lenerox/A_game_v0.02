@@ -9,7 +9,7 @@
 #define CLK_PIN   13
 #define DATA_PIN  11
 #define CS_PIN    10
-MD_Parola P = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
+MD_Parola P = MD_Parola(HARDWARE_TYPE, DATA_PIN, CLK_PIN, CS_PIN, MAX_DEVICES);
 
 long randNumber;
 int button_values1[] = {920,587,427,340,270,215,180,110};
@@ -18,13 +18,13 @@ int analogValue0 = 0;
 int analogValue1 = 0;
 //int analogValue2 = 0;
 int analogValue = 0;
-int pin_p1 = A0;
+int pin_p1 = A7;
 int pin_p2 = A6;
 int leds_cnt = 6;
-int p0_leds[15] = {2,3,4,5,6,7,8,9,A1,A2,A3,A4,A5,0,1};
+int p0_leds[15] = {2,3,4,5,6,7,8,9,A1,A2,A3,A4,A5,A0,12};
 int p0_size = 0;
 int p1_leds[8] = {2,3,4,5,6,7,8,9};
-int p2_leds[7] = {A1,A2,A3,A4,A5,0,1};
+int p2_leds[7] = {A1,A2,A3,A4,A5,A0,12};
 int p1_score = 0;
 int p2_score = 0;
 int pin_light = 0;
@@ -39,7 +39,8 @@ int action_speed_min = 5;
 
 void setup() {
   Serial.begin(9600);
-
+  P.begin(1);
+  P.displayClear();
   randomSeed(analogRead(A1));
   
   //inicjalizacja przycisków
@@ -53,7 +54,7 @@ void setup() {
     pinMode(p0_leds[i], OUTPUT);
     digitalWrite(p0_leds[i], 0);
   }
-  
+
   //oczekiwanie na wybór trybu gry
   analogValue=analogRead(pin_p1);
   analogValue=analogValue+analogRead(pin_p2);
@@ -82,8 +83,7 @@ void setup() {
   }
   gameSet();
 
-  P.begin(1);
-  P.displayClear();
+
   if (numPlayer == true)
     P.displayText( "2 GRACZY", PA_LEFT, 1, 3000, PA_NO_EFFECT);
   else
@@ -119,11 +119,11 @@ void loop() {
       digitalWrite(p2_leds[pin_light], HIGH);
     }
     game_2();
-    sprintf(buf, "%d - %d", p1_score, p2_score);
+    sprintf(buf, "%d-%d", p2_score, p1_score);
   }
   else //1 gracz
   {
-    int pin_light = random(0,6);
+    int pin_light = random(0,  p0_size);
       /*for (int i = 0; leds_cnt - 1 > i; i++) {
         tu wstawić odejmowanie punktów
         digitalWrite(p1_leds[i], LOW);
