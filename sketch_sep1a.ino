@@ -1,3 +1,11 @@
+/*_________________Gra na podstawie_________________:
+https://github.com/DIYTechBros/ButtonSmack/blob/master/Smak_a_button.ino
+
+Dodano:
+-tryb jednoosobowy
+-zróżnicowane poziomy trudności
+-możliwość sprawdzenia działania przycisków (konieczny "serial monitor" i ustawienie "while" (odczytywanie wartosci wejsc) na true)
+*/
 #include <stdio.h>
 #include <MD_Parola.h>
 #include <MD_MAX72xx.h>
@@ -29,13 +37,14 @@ int p1_score = 0;
 int p2_score = 0;
 int pin_light = 0;
 char buf[10];
+char buf0[10]="0";
 bool step_action = false;
-bool numPlayer = false; //jeden gracz - false ,dwóch - true
+bool twoPlayers = false; //jeden gracz - false ,dwóch - true
 int difSet = 0; //poziom trudności: 0- led świecą aż do naciśnięcia; 1- led gasną przed zapaleniem kolejnego; 2- 1+ ujemne punkty za nietrafienie; 3- 2+ ujemne punkkty za nie zgaszenie led; można to ogarnąć też inaczej:)
 int step_counter = 0;
 int btn_tol = 25;
-int action_speed = 10;
-int action_speed_min = 5;
+int action_speed = 4000;
+int action_speed_min = 25;
 
 void setup() {
   Serial.begin(9600);
@@ -54,7 +63,13 @@ void setup() {
     pinMode(p0_leds[i], OUTPUT);
     digitalWrite(p0_leds[i], 0);
   }
-
+while(false)//odczytywanie wartosci wejsc
+{
+p1_score=analogRead(pin_p1);
+  sprintf(buf, "%d /", p1_score);
+  Serial.write(buf);
+  delay(500);
+}
   //oczekiwanie na wybór trybu gry
   analogValue=analogRead(pin_p1);
   analogValue=analogValue+analogRead(pin_p2);
@@ -84,12 +99,15 @@ void setup() {
   gameSet();
 
 
-  if (numPlayer == true)
-    P.displayText( "2 GRACZY", PA_LEFT, 1, 3000, PA_NO_EFFECT);
+  if (twoPlayers == true)
+    P.displayText( "1 VS 1", PA_CENTER, P.getSpeed(), 3000, PA_SCROLL_UP);
   else
-    P.displayText( "1 GRACZ", PA_CENTER, 1, 3000, PA_NO_EFFECT);
+    P.displayText( "1 GRACZ", PA_CENTER, P.getSpeed(), 3000, PA_SCROLL_LEFT);
   P.displayAnimate(); //wyświetlenie wartości na LED MATRIX
-  delay(500);
+    for (int i =0; i<300;i++)
+    {
+      delay(15);P.displayAnimate();
+    }
 }
 
 void loop() {
@@ -105,26 +123,52 @@ void loop() {
      // Serial.println(action_speed);
     }
 
-  if (numPlayer == true)//2 graczy
+  if (twoPlayers == true)//2 graczy
   {
     if (step_action) 
     {
       int pin_light = random(0,6);
-      /*for (int i = 0; leds_cnt - 1 > i; i++) {
-        //tu wstawić odejmowanie punktów
-        digitalWrite(p1_leds[i], LOW);
-        digitalWrite(p2_leds[i], LOW);
-      }*/
+      if (difSet>0)
+      {
+        for (int i = 0; leds_cnt > i; i++) 
+        {
+          //tu wstawić odejmowanie punktów
+          if (i==pin_light)
+          {}
+          else
+          {
+            analogValue=digitalRead(p1_leds[i]);
+            delay(10);  
+            analogValue1=digitalRead(p2_leds[i]);
+
+            sprintf(buf, "%d-%d :%d", analogValue, analogValue1, i);
+            Serial.println(buf);
+            if (analogValue == 1 and difSet>2)
+            {
+              p1_score--;
+            }
+            digitalWrite(p1_leds[i], LOW);
+            if (analogValue1 == 1 and difSet>2)
+            {
+              p2_score--;
+            }
+            digitalWrite(p2_leds[i], LOW);
+            sprintf(buf, "%d-%d", p2_score, p1_score);
+            Serial.println(buf);
+          }
+        }
+      }
+
       digitalWrite(p1_leds[pin_light], HIGH);
       digitalWrite(p2_leds[pin_light], HIGH);
     }
     game_2();
-    sprintf(buf, "%d-%d", p2_score, p1_score);
+    sprintf(buf, "%d:%d", p1_score, p2_score);
   }
   else //1 gracz
   {
     int pin_light = random(0,  p0_size);
-      /*for (int i = 0; leds_cnt - 1 > i; i++) {
+      /*for (int i = 0; p0_size - 1 > i; i++) {
         tu wstawić odejmowanie punktów
         digitalWrite(p1_leds[i], LOW);
       }*/
@@ -132,7 +176,7 @@ void loop() {
     game_1();
     sprintf(buf, "%d", p1_score);
   }
-  P.displayClear();
+  //P.displayClear();
   P.displayText(buf, PA_CENTER, 0, 0, PA_NO_EFFECT);
   P.displayAnimate();
   delay(150);  
@@ -195,7 +239,9 @@ void game_2()  //TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if(digitalRead(p2_leds[i]) == HIGH)
         {
           digitalWrite(p2_leds[i], LOW);
-          p1_score++;
+          p2_score++;
+          /*if (difSet>2)
+            step_action = true; */ 
         }
       }
     }
@@ -215,7 +261,7 @@ void game_2()  //TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if(digitalRead(p1_leds[i]) == HIGH)
         {
           digitalWrite(p1_leds[i], LOW);
-          p2_score++;
+          p1_score++;
         }
       }
     }
@@ -270,7 +316,8 @@ void gameSet()
 
 void but_value()//ograniczenie rozmiaru tablic do "6"
 {
-  numPlayer = true;
+  twoPlayers = true;
+  action_speed=action_speed/200;
   button_values1[4]=button_values1[6];
   button_values1[5]=button_values1[7];
   p1_leds[4]=p1_leds[6];
