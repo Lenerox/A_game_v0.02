@@ -5,6 +5,27 @@ Dodano:
 -tryb jednoosobowy
 -zróżnicowane poziomy trudności
 -możliwość sprawdzenia działania przycisków (konieczny "serial monitor" i ustawienie "while" (odczytywanie wartosci wejsc) na true)
+
+BUTTON MAP [LED]
+button_values1
+00 [3]  01 [2]    02      03    04
+587     920       N       N     N
+
+10 [4]  11 [5]    12 [6]  13    14
+427     340       270     N     N
+
+20 [9]  21 [8]    22 [7]  23    24
+110     180       215     N     N
+
+button_values2 
+00    01    02    03    04
+N     N     920   427   340
+
+10    11    12    13    14
+N     N     N     215   270
+
+20    21    22    23    24
+N     N     N     180   110
 */
 #include <stdio.h>
 #include <MD_Parola.h>
@@ -40,7 +61,7 @@ char buf[10];
 char buf0[10]="0";
 bool step_action = false;
 bool twoPlayers = false; //jeden gracz - false ,dwóch - true
-int difSet = 0; //poziom trudności: 0- led świecą aż do naciśnięcia; 1- led gasną przed zapaleniem kolejnego; 2- 1+ ujemne punkty za nietrafienie; 3- 2+ ujemne punkkty za nie zgaszenie led; można to ogarnąć też inaczej:)
+int difSet = 0; //poziom trudności: 0- led świecą aż do naciśnięcia; 1- led gasną przed zapaleniem kolejnego; 2- 1+ ujemne punkty za nietrafienie; 3- 2+ ujemne punkkty za nie zgaszenie led; 4- 3+ ujemne punkty
 int step_counter = 0;
 int btn_tol = 25;
 int action_speed = 4000;
@@ -63,13 +84,13 @@ void setup() {
     pinMode(p0_leds[i], OUTPUT);
     digitalWrite(p0_leds[i], 0);
   }
-while(false)//odczytywanie wartosci wejsc
-{
-p1_score=analogRead(pin_p1);
-  sprintf(buf, "%d /", p1_score);
-  Serial.write(buf);
-  delay(500);
-}
+  while(false)//odczytywanie wartosci wejsc
+  {
+    p1_score=analogRead(pin_p1);
+    sprintf(buf, "%d /", p1_score);
+    Serial.write(buf);
+    delay(500);
+  }
   //oczekiwanie na wybór trybu gry
   analogValue=analogRead(pin_p1);
   analogValue=analogValue+analogRead(pin_p2);
@@ -103,11 +124,7 @@ p1_score=analogRead(pin_p1);
     P.displayText( "1 VS 1", PA_CENTER, P.getSpeed(), 3000, PA_SCROLL_UP);
   else
     P.displayText( "1 GRACZ", PA_CENTER, P.getSpeed(), 3000, PA_SCROLL_LEFT);
-  P.displayAnimate(); //wyświetlenie wartości na LED MATRIX
-    for (int i =0; i<300;i++)
-    {
-      delay(15);P.displayAnimate();
-    }
+    animDisp();
 }
 
 void loop() {
@@ -137,32 +154,36 @@ void loop() {
           {}
           else
           {
-            analogValue=digitalRead(p1_leds[i]);
+            /*analogValue=digitalRead(p1_leds[i]);
             delay(10);  
             analogValue1=digitalRead(p2_leds[i]);
 
             sprintf(buf, "%d-%d :%d", analogValue, analogValue1, i);
-            Serial.println(buf);
-            if (analogValue == 1 and difSet>2)
+            Serial.println(buf);*/
+            if (digitalRead(p1_leds[i]) == 1 and difSet>2)
             {
               p1_score--;
             }
-            digitalWrite(p1_leds[i], LOW);
-            if (analogValue1 == 1 and difSet>2)
+            if (digitalRead(p2_leds[i]) == 1 and difSet>2)
             {
               p2_score--;
             }
+            
+            digitalWrite(p1_leds[i], LOW);
             digitalWrite(p2_leds[i], LOW);
-            sprintf(buf, "%d-%d", p2_score, p1_score);
-            Serial.println(buf);
           }
         }
+
       }
 
       digitalWrite(p1_leds[pin_light], HIGH);
       digitalWrite(p2_leds[pin_light], HIGH);
     }
     game_2();
+    if (difSet<4 and p1_score<0)
+      p1_score=0;
+    if (difSet<4 and p2_score<0)
+      p2_score=0;
     sprintf(buf, "%d:%d", p1_score, p2_score);
   }
   else //1 gracz
@@ -174,15 +195,36 @@ void loop() {
       }*/
       digitalWrite(p0_leds[pin_light], HIGH);
     game_1();
+    if (difSet<4 and p1_score<0)
+      p1_score=0;
     sprintf(buf, "%d", p1_score);
   }
   //P.displayClear();
   P.displayText(buf, PA_CENTER, 0, 0, PA_NO_EFFECT);
   P.displayAnimate();
-  delay(150);  
+  //endgame
+  if (p1_score>100)
+  {
+    P.displayText("<<WIN<<", PA_CENTER, 0, 0, PA_SCROLL_LEFT);
+    p1_score=0;
+    p2_score=0;
+    animDisp();
+    difSet++;
+    animDisp(); 
+  }
+  if (p1_score>100)
+  {
+    P.displayText(">>WIN>>", PA_CENTER, 0, 0, PA_SCROLL_RIGHT);
+    p1_score=0;
+    p2_score=0;
+    animDisp();   
+    difSet++;
+    animDisp(); 
+  }
+  delay(50); 
 }
 
-void game_1()  //TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!
+void game_1()  //test
 {
   analogValue1 = 0;
   analogValue = analogRead(pin_p2);
@@ -199,6 +241,10 @@ void game_1()  //TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!
         {
           digitalWrite(p2_leds[i], LOW);
           p1_score++;
+        }
+        else if (difSet>1)
+        {
+          p1_score--;
         }
       }
     }
@@ -218,11 +264,15 @@ void game_1()  //TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!
           digitalWrite(p1_leds[i], LOW);
           p1_score++;
         }
+        else if (difSet>1)
+        {
+          p1_score--;
+        }
       }
     }
   }
 }
-void game_2()  //TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!
+void game_2()  //test
 {
   //gracz nr 2
   analogValue1 = 0;
@@ -242,6 +292,10 @@ void game_2()  //TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!
           p2_score++;
           /*if (difSet>2)
             step_action = true; */ 
+        }
+        else if (difSet>1)
+        {
+          p2_score--;
         }
       }
     }
@@ -263,6 +317,10 @@ void game_2()  //TO DO!!!!!!!!!!!!!!!!!!!!!!!!!!!
           digitalWrite(p1_leds[i], LOW);
           p1_score++;
         }
+        else if (difSet>1)
+        {
+          p1_score--;
+        }
       }
     }
   }
@@ -278,38 +336,38 @@ void gameSet()
   {
     difSet = 2;
   } 
-  else if ( analogValue < button_values2[1] + btn_tol and analogValue > button_values2[1] - btn_tol )//bt02
+  else if ( analogValue < button_values2[1] + btn_tol and analogValue > button_values2[1] - btn_tol )//bt03
   {
     difSet = 3;
   } 
-  else if ( analogValue < button_values2[2] + btn_tol and analogValue > button_values2[2] - btn_tol )//bt02
+  else if ( analogValue < button_values2[2] + btn_tol and analogValue > button_values2[2] - btn_tol )//bt04
   {
-    difSet = 3;
+    difSet = 4;
   } 
   //2 graczy 
-  if ( analogValue < button_values1[2] + btn_tol and analogValue > button_values1[2] - btn_tol )//bt01
+  if ( analogValue < button_values1[2] + btn_tol and analogValue > button_values1[2] - btn_tol )//bt10
   {
     difSet = 0;
     but_value();
   }
-  else if ( analogValue < button_values1[3] + btn_tol and analogValue > button_values1[3] - btn_tol )//bt01
+  else if ( analogValue < button_values1[3] + btn_tol and analogValue > button_values1[3] - btn_tol )//bt11
   {
     difSet = 1;
     but_value();
   }
-  else if ( analogValue < button_values1[4] + btn_tol and analogValue > button_values1[4] - btn_tol )//bt02
+  else if ( analogValue < button_values1[4] + btn_tol and analogValue > button_values1[4] - btn_tol )//bt12
   {
     difSet = 2;
     but_value();
   } 
-  else if ( analogValue < button_values2[4] + btn_tol and analogValue > button_values2[4] - btn_tol )//bt02
+  else if ( analogValue < button_values2[4] + btn_tol and analogValue > button_values2[4] - btn_tol )//bt13
   {
     difSet = 3;
     but_value();
   } 
-  else if ( analogValue < button_values2[3] + btn_tol and analogValue > button_values2[3] - btn_tol )//bt02
+  else if ( analogValue < button_values2[3] + btn_tol and analogValue > button_values2[3] - btn_tol )//bt14
   {
-    difSet = 3;
+    difSet = 4;
     but_value();
   } 
 }
@@ -327,4 +385,12 @@ void but_value()//ograniczenie rozmiaru tablic do "6"
     button_values2[i]=button_values2[i+1];
     p2_leds[i]=p2_leds[i+1];
   }
+}
+void animDisp()
+{
+  P.displayAnimate();
+  for (int i =0; i<200;i++)
+    {
+      delay(15);P.displayAnimate();
+    }
 }
