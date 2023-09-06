@@ -64,8 +64,10 @@ bool twoPlayers = false; //jeden gracz - false ,dwóch - true
 int difSet = 0; //poziom trudności: 0- led świecą aż do naciśnięcia; 1- led gasną przed zapaleniem kolejnego; 2- 1+ ujemne punkty za nietrafienie; 3- 2+ ujemne punkkty za nie zgaszenie led; 4- 3+ ujemne punkty
 int step_counter = 150;
 int btn_tol = 25;
-int action_speed = 150;
-int action_speed_min = 25;
+int action_speed = 200;
+int action_speed_min = 50;
+int limCounter1=0;
+int limCounter2=0;
 bool bt1_press=false;
 bool bt2_press=false;
 
@@ -95,8 +97,9 @@ void setup() {
   }
   //oczekiwanie na wybór trybu gry
   analogValue=analogRead(pin_p1);
-  analogValue=analogValue+analogRead(pin_p2);
-  while(analogValue<50 )
+  delay(5);
+  analogValue1=analogRead(pin_p2);
+  while(analogValue<50 and analogValue1<50)
   {
     digitalWrite(p0_leds[pin_light], !digitalRead(p0_leds[pin_light]));
     delay(100);
@@ -107,14 +110,14 @@ void setup() {
     if (pin_light%2==1)
       analogValue=analogRead(pin_p1);
     else
-      analogValue=analogRead(pin_p2);
+      analogValue1=analogRead(pin_p2);
   }
   pin_light = 0;
-  analogValue1=analogRead(pin_p1);
+  /*analogValue1=analogRead(pin_p1);
   if (analogValue<analogValue1)
   {
     analogValue=analogValue1;
-  }
+  } */
   for (int i = 0; p0_size > i; i++) 
   {
     digitalWrite(p0_leds[i], 0);
@@ -181,6 +184,7 @@ void loop() {
     if (difSet<4 and p2_score<0)
       p2_score=0;
     sprintf(buf, "%d:%d", p1_score, p2_score);
+    
   }
   else //1 gracz
   {
@@ -209,22 +213,28 @@ void loop() {
   P.displayText(buf, PA_CENTER, 0, 0, PA_NO_EFFECT);
   P.displayAnimate();
   //endgame
-  if (p1_score>100)
+  if (p1_score>99)
   {
     P.displayText("<<WIN<<", PA_CENTER, 0, 0, PA_SCROLL_LEFT);
     p1_score=0;
     p2_score=0;
     animDisp();
     difSet++;
+    action_speed_min=action_speed_min-5;
+    if (action_speed_min<10)
+      action_speed_min=10;
     animDisp(); 
   }
-  if (p1_score>100)
+  if (p1_score>99)
   {
     P.displayText(">>WIN>>", PA_CENTER, 0, 0, PA_SCROLL_RIGHT);
     p1_score=0;
     p2_score=0;
     animDisp();   
     difSet++;
+    action_speed_min=action_speed_min-5;
+    if (action_speed_min<10)
+      action_speed_min=10;
     animDisp(); 
   }
   delay(5); 
@@ -232,9 +242,10 @@ void loop() {
 
 void game_1()  //test
 {
+
   analogValue1 = 0;
   analogValue = analogRead(pin_p2);
-  if (analogValue > 50)
+  if (analogValue > 50 and bt2_press==false)
   {
     delay(5);  
     analogValue1 = analogRead(pin_p2);
@@ -243,15 +254,11 @@ void game_1()  //test
     {
       if ( analogValue < button_values2[i] + btn_tol and analogValue > button_values2[i] - btn_tol )
       {
+        bt2_press=true;
         if(digitalRead(p2_leds[i]) == HIGH) 
         {
           p1_score++;
           digitalWrite(p2_leds[i], LOW);
-          while (analogValue < button_values2[i] + btn_tol and analogValue > button_values2[i] - btn_tol)
-          {
-            analogValue = analogRead(pin_p2);
-            delay(10); 
-          }
         }
         else if (difSet>1)
         {
@@ -260,8 +267,10 @@ void game_1()  //test
       }
     }
   }
+  else
+    limCounter1++;
   analogValue = analogRead(pin_p1);
-  if (analogValue > 50)
+  if (analogValue > 50 and bt1_press==false)
   {
     delay(5);  
     analogValue1 = analogRead(pin_p1);
@@ -270,6 +279,7 @@ void game_1()  //test
     {
       if ( analogValue < button_values1[i] + btn_tol and analogValue > button_values1[i] - btn_tol )
       {
+        bt1_press=true;
         if(digitalRead(p1_leds[i]) == HIGH) 
         {
           digitalWrite(p1_leds[i], LOW);
@@ -287,13 +297,26 @@ void game_1()  //test
       }
     }
   }
+  else
+    limCounter2++;
+
+  if (limCounter1>10)
+  {
+    limCounter1=0;
+    bt1_press=false;
+  }
+  if (limCounter2>10)
+  {
+    limCounter2=0;
+    bt2_press=false;
+  }
 }
 void game_2()  //test
 {
   //gracz nr 2
   analogValue1 = 0;
   analogValue = analogRead(pin_p2);
-  if (analogValue > 50)
+  if (analogValue > 50 and bt2_press==false)
   {
     delay(5);  
     analogValue1 = analogRead(pin_p2);
@@ -302,6 +325,7 @@ void game_2()  //test
     {
       if ( analogValue < button_values2[i] + btn_tol and analogValue > button_values2[i] - btn_tol )
       {
+        bt2_press=true;
         if(digitalRead(p2_leds[i]) == HIGH)
         {
           digitalWrite(p2_leds[i], LOW);
@@ -319,10 +343,12 @@ void game_2()  //test
       }
     }
   }
+  else
+    limCounter1++;
   //gracz nr 1
   analogValue1 = 0;
   analogValue = analogRead(pin_p1);
-  if (analogValue > 50)
+  if (analogValue > 50 and bt1_press==false)
   {
     delay(5);  
     analogValue1 = analogRead(pin_p1);
@@ -331,6 +357,7 @@ void game_2()  //test
     {
       if ( analogValue < button_values1[i] + btn_tol and analogValue > button_values1[i] - btn_tol )
       {
+        bt1_press=true;
         if(digitalRead(p1_leds[i]) == HIGH)
         {
           digitalWrite(p1_leds[i], LOW);
@@ -348,6 +375,19 @@ void game_2()  //test
       }
     }
   }
+  else
+    limCounter2++;
+
+  if (limCounter1>10)
+  {
+    limCounter1=0;
+    bt1_press=false;
+  }
+  if (limCounter2>10)
+  {
+    limCounter2=0;
+    bt2_press=false;
+  }
 }
 void gameSet()
 {
@@ -356,15 +396,15 @@ void gameSet()
   {
     difSet = 1;
   }
-  else if ( analogValue < button_values2[0] + btn_tol and analogValue > button_values2[0] - btn_tol )//bt02
+  else if ( analogValue1 < button_values2[0] + btn_tol and analogValue1 > button_values2[0] - btn_tol )//bt02
   {
     difSet = 2;
   } 
-  else if ( analogValue < button_values2[1] + btn_tol and analogValue > button_values2[1] - btn_tol )//bt03
+  else if ( analogValue1 < button_values2[1] + btn_tol and analogValue1 > button_values2[1] - btn_tol )//bt03
   {
     difSet = 3;
   } 
-  else if ( analogValue < button_values2[2] + btn_tol and analogValue > button_values2[2] - btn_tol )//bt04
+  else if ( analogValue1 < button_values2[2] + btn_tol and analogValue1 > button_values2[2] - btn_tol )//bt04
   {
     difSet = 4;
   } 
@@ -384,16 +424,19 @@ void gameSet()
     difSet = 2;
     but_value();
   } 
-  else if ( analogValue < button_values2[4] + btn_tol and analogValue > button_values2[4] - btn_tol )//bt13
+  else if ( analogValue1 < button_values2[4] + btn_tol and analogValue1 > button_values2[4] - btn_tol )//bt13
   {
     difSet = 3;
     but_value();
   } 
-  else if ( analogValue < button_values2[3] + btn_tol and analogValue > button_values2[3] - btn_tol )//bt14
+  else if ( analogValue1 < button_values2[3] + btn_tol and analogValue1 > button_values2[3] - btn_tol )//bt14
   {
     difSet = 4;
     but_value();
   } 
+  
+    sprintf(buf, "%d /", analogValue);
+    Serial.write(buf);
 }
 
 void but_value()//ograniczenie rozmiaru tablic do "6"
