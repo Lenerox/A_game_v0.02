@@ -201,12 +201,12 @@ void loop() {
   }
 
   //zabezpieczenie przed długim trzymaniem przycisku
-  if (limCounter1>30)
+  if (limCounter1>round(action_speed_min/3))
   {
     limCounter1=0;
     bt1_press=false;
   }
-  if (limCounter2>30)
+  if (limCounter2>round(action_speed_min/3))
   {
     limCounter2=0;
     bt2_press=false;
@@ -251,13 +251,15 @@ void game_1()
   analogValue = analogRead(pin_p2);
   if (analogValue > 50 and bt2_press==false)
   {
-    delay(5);  
     analogValue1 = analogRead(pin_p2);
+    if (analogValue>analogValue1)
+      analogValue1=analogValue; 
     analogValue = (analogValue+analogValue1)/2;
     for (int i = 0; 7 > i; i++) 
     {
-      if ( analogValue < button_values2[i] + btn_tol and analogValue > button_values2[i] - btn_tol )
+      if ( analogValue < button_values2[i] + btn_tol and analogValue > button_values2[i] - btn_tol and bt02_press[i]==false and bt2_press==false)
       {
+        bt02_press[i]=true;
         bt2_press=true;
         if(digitalRead(p2_leds[i]) == HIGH) 
         {
@@ -272,27 +274,31 @@ void game_1()
     }
   }
   else
-    limCounter1++;
+    limCounter2++;
+  delay(5); 
   analogValue = analogRead(pin_p1);
   if (analogValue > 50 and bt1_press==false)
   {
-    delay(5);  
+    //delay(5);  
     analogValue1 = analogRead(pin_p1);
+    if (analogValue>analogValue1)
+      analogValue1=analogValue;
     analogValue = (analogValue+analogValue1)/2;
     for (int i = 0; 8 > i; i++) 
     {
-      if ( analogValue < button_values1[i] + btn_tol and analogValue > button_values1[i] - btn_tol )
+      if ( analogValue < button_values1[i] + btn_tol and analogValue > button_values1[i] - btn_tol and bt01_press[i]==false and bt1_press==false)
       {
+        bt01_press[i]=true;
         bt1_press=true;
         if(digitalRead(p1_leds[i]) == HIGH) 
         {
           digitalWrite(p1_leds[i], LOW);
           p1_score++;
-          while (analogValue < button_values1[i] + btn_tol and analogValue > button_values1[i] - btn_tol)
+          /* while (analogValue < button_values1[i] + btn_tol and analogValue > button_values1[i] - btn_tol)
           {
             analogValue = analogRead(pin_p1);
             delay(10); 
-          }
+          } */
         }
         else if (difSet>1 and step_counter>20)
         {
@@ -302,7 +308,7 @@ void game_1()
     }
   }
   else
-    limCounter2++;
+    limCounter1++;
 }
 void game_2()
 {
@@ -311,15 +317,16 @@ void game_2()
   analogValue = analogRead(pin_p2);
   if (analogValue > 50 and bt2_press==false)//sprawdzanie czy naciśnięto przycisk
   {
-    delay(5);  
     analogValue1 = analogRead(pin_p2);
+    if (analogValue>analogValue1)
+      analogValue1=analogValue;
     analogValue = (analogValue + analogValue1)/2;//obliczanie średniej z 2 pomiarów w celu pewniejszego ustalenia naciśniętego przycisku
     for (int i = 0; leds_cnt > i; i++) 
     {
-      if ( analogValue < button_values2[i] + btn_tol and analogValue > button_values2[i] - btn_tol and bt02_press[i]==false)//ustalanie który przycisk został naciśnięty
+      if ( analogValue < button_values2[i] + btn_tol and analogValue > button_values2[i] - btn_tol and bt02_press[i]==false and bt2_press==false)//ustalanie który przycisk został naciśnięty
       {
-        for (int j = 0; leds_cnt > j; j++)
-          bt02_press[j]= false;
+        //for (int j = 0; leds_cnt > j; j++)
+        //  bt02_press[j]= false;
         bt02_press[i]=true;
         bt2_press=true;
         if(digitalRead(p2_leds[i]) == HIGH)
@@ -333,23 +340,26 @@ void game_2()
     }
   }
   else
-    limCounter1++;
-  
+    limCounter2++;
+  delay(5); 
+    sprintf(buf, "%d:%d - ", p1_score, p2_score);
+  Serial.print(buf);
+  sprintf(buf, "%d",   analogValue);
+  Serial.println(buf);
   //gracz nr 1
   analogValue1 = 0;
   analogValue = analogRead(pin_p1);
   if (analogValue > 50 and bt1_press==false)
   {
-    delay(5);  
+    //delay(5);  
     analogValue1 = analogRead(pin_p1);
+    if (analogValue>analogValue1)
+      analogValue1=analogValue; 
     analogValue = (analogValue+analogValue1)/2;
     for (int i = 0; leds_cnt > i; i++) 
     {
-      if ( analogValue < button_values1[i] + btn_tol and analogValue > button_values1[i] - btn_tol and bt01_press[i]==false)
+      if ( analogValue < button_values1[i] + btn_tol and analogValue > button_values1[i] - btn_tol and bt01_press[i]==false and bt1_press==false)
       {
-        for (int j = 0; leds_cnt > j; j++)
-          bt01_press[j]= false;
-        
         bt01_press[i]=true;
         bt1_press=true;
         if(digitalRead(p1_leds[i]) == HIGH)
@@ -363,7 +373,7 @@ void game_2()
     }
   }
   else
-    limCounter2++;
+    limCounter1++;
 }
 void gameSet()//ustalanie wybranego trybu gry
 {
