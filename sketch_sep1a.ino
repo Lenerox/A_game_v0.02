@@ -68,7 +68,7 @@ bool twoPlayers = false; //jeden gracz - false ,dwóch - true
 bool bt1_press=false;
 bool bt2_press=false;
 bool bt01_press[8]={false,false,false,false,false,false,false,false};
-bool bt02_press[7]={false,false,false,false,false,false,false};
+bool bt02_press[8]={false,false,false,false,false,false,false,false};
 
 void setup() {
   Serial.begin(9600);
