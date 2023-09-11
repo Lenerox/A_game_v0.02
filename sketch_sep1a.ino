@@ -69,6 +69,7 @@ bool bt1_press=false;
 bool bt2_press=false;
 bool bt01_press[8]={false,false,false,false,false,false,false,false};
 bool bt02_press[7]={false,false,false,false,false,false,false};
+
 void setup() {
   Serial.begin(9600);
   P.begin(1);
@@ -183,6 +184,11 @@ void loop() {
     if (step_action) 
     {
       int pin_light = random(0,  p0_size);
+      for (int i = 0; leds_cnt > i; i++)
+      { 
+        bt01_press[i]= false;
+        bt02_press[i]= false;
+      }
       if (difSet>0)
       {
         for (int i = 0; p0_size > i; i++) 
