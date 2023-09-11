@@ -184,7 +184,7 @@ void loop() {
     if (step_action) 
     {
       int pin_light = random(0,  p0_size);
-      for (int i = 0; leds_cnt > i; i++)
+      for (int i = 0; 8 > i; i++)
       { 
         bt01_press[i]= false;
         bt02_press[i]= false;
